@@ -1,0 +1,174 @@
+# pear completion by Amir Mohammad Saied <amirsaied@gmail.com>
+
+_pear()
+{
+    local cur prev commands
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    commands='build bundle channel-add channel-alias channel-delete \
+        channel-discover channel-info channel-update clear-cache \
+        config-create config-get config-help config-set config-show convert \
+        cvsdiff cvstag download download-all help info install list list-all \
+        list-channels list-files list-upgrades login logout makerpm package \
+        package-dependencies package-validate pickle remote-info remote-list \
+        run-scripts run-tests search shell-tests sign uninstall update-channels upgrade upgrade-all'
+
+    case "${prev}" in
+        build)
+            _filedir
+            return 0
+            ;;
+        bundle)
+            if [[ "${cur}" == -* ]] ; then
+                COMPREPLY=( $(compgen -W "-d -f --destination --force" -- ${cur}) )
+            fi
+            return 0
+            ;;
+        channel-@(alias|delete|info|update))
+            _discovered_channels
+            return 0
+            ;;
+        convert)
+            _filedir
+            if [[ "${cur}" == -* ]] ; then
+                COMPREPLY=( $(compgen -W "-f --flat" -- ${cur}) )
+            fi
+            return 0
+            ;;
+        cvsdiff)
+            if [[ "${cur}" == -* ]] ; then
+                COMPREPLY=( $(compgen -W "-q -Q -D -R -r -c -u -i -b -B -n \
+                    --quiet --reallyquiet --date --release --revision \
+                    --context --unified --ignore-case --ignore-whitespace \
+                    --ignore-blank-lines --brief --dry-run" -- ${cur}) )
+            fi
+            _filedir
+            return 0
+            ;;
+        cvstag)
+            if [[ "${cur}" == -* ]] ; then
+                COMPREPLY=( $(compgen -W "-q -Q -F -d -n --quiet \
+                    --reallyquiet --slide --delete--dry-run" -- ${cur}) )
+            fi
+            _filedir
+            return 0
+            ;;
+        download)
+            if [[ "${cur}" == -* ]] ; then
+                COMPREPLY=( $(compgen -W "-Z --nocompress" -- ${cur}) )
+            fi
+            return 0
+            ;;
+        download-all|remote-list)
+            if [[ "${cur}" == -* ]] ; then
+                COMPREPLY=( $(compgen -W "-c --channel" -- ${cur}) )
+            fi
+            return 0
+            ;;
+        install)
+            if [[ "${cur}" == -* ]] ; then
+                 COMPREPLY=( $(compgen -W "-f -l -n -r -s -B -Z -R -P -a -o \
+                    -O -p --force --loose --nodeps --register-only --soft \
+                    --nobuild --nocompress --installroot --ignore-errors \
+                    --alldeps --onlyreqdeps --offline --pretend" -- ${cur}) )
+            fi
+            return 0
+            ;;
+        list|search)
+            if [[ "${cur}" == -* ]] ; then
+                COMPREPLY=( $(compgen -W "-c -a -i --channel --allchannels --channelinfo" -- ${cur}) )
+            else
+                local packages=$(for p in `pear list | tail --lines=+4 | cut -d' ' -f1`; do echo ${p} ; done )
+                COMPREPLY=( $(compgen -W "${packages}" -- ${cur}) )
+            fi
+            return 0
+            ;;
+        list-all)
+            if [[ "${cur}" == -* ]] ; then
+                COMPREPLY=( $(compgen -W "-c -i --channel --channelinfo" -- ${cur}) )
+            fi
+            return 0
+            ;;
+        list-files)
+            local packages=$(for p in `pear list | tail --lines=+4 | cut -d' ' -f1`; do echo ${p} ; done )
+            COMPREPLY=( $(compgen -W "${packages}" -- ${cur}) )
+            return 0
+            ;;
+        list-upgrades)
+            if [[ "${cur}" == -* ]] ; then
+                COMPREPLY=( $(compgen -W "-i --channelinfo" -- ${cur}) )
+            fi
+            return 0
+            ;;
+        login)
+            _discovered_channels
+            return 0
+            ;;
+        makerpm)
+            if [[ "${cur}" == -* ]] ; then
+                COMPREPLY=( $(compgen -W "-t -p --spec-template --rpm-pkgname" -- ${cur}) )
+            fi
+            _filedir
+            return 0
+            ;;
+        p@(ackage|ickle))
+            if [[ "${cur}" == -* ]] ; then
+                COMPREPLY=( $(compgen -W "-Z -n --nocompress --showname" -- ${cur}) )
+            fi
+            _filedir
+            return 0
+            ;;
+        package-@(dependencies|validate))
+            _filedir
+            return 0
+            ;;
+        run-tests)
+            if [[ "${cur}" == -* ]] ; then
+                COMPREPLY=( $(compgen -W "-r -i -l -q -s -p -u -t -c -x \
+                    --recur --ini --realtimelog --quiet --simple --package \
+                    --phpunit --tapoutput --cgi --coverage" -- ${cur}) )
+            fi
+            return 0
+            ;;
+        sign)
+            if [[ "${cur}" == -* ]] ; then
+                COMPREPLY=( $(compgen -W "-v --verbose" -- ${cur}) )
+            fi
+            _filedir
+            return 0
+            ;;
+        u@(ninstall|pgrade)|run-scripts)
+            _installed_packages
+            return 0
+            ;;
+        upgrade-all)
+            if [[ "${cur}" == -* ]] ; then
+                COMPREPLY=( $(compgen -W "-n -r -B -Z -R --nodeps \
+                    --register-only --nobuild --nocompress --installroot \
+                    --ignore-errors --loose" -- ${cur}) )
+            fi
+            return 0
+            ;;
+        *)
+            ;;
+    esac
+
+    COMPREPLY=($(compgen -W "${commands}" -- ${cur}))  
+    return 0
+}
+
+_installed_packages()
+{
+    local packages=$(for p in `pear list | tail --lines=+4 | cut -d' ' -f1`; do echo ${p} ; done )
+    COMPREPLY=( $(compgen -W "${packages}" -- ${cur}) )
+}
+
+_discovered_channels()
+{
+    local channels=$(for c in `pear list-channels | tail --lines=+4 | grep -v __uri | cut -d' ' -f1`; do echo ${c} ; done )
+    COMPREPLY=( $(compgen -W "${channels}" -- ${cur}) )
+            
+}
+
+complete -F _pear pear
